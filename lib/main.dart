@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
 
+import 'package:hello_world/form_page.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -66,10 +68,10 @@ class _MyHomePageState extends State<MyHomePage> {
       // called again, and so nothing would appear to happen.
       _counter++;
       developer.log(
-      'Counter incremented', // The main log message
-      name: 'my.app.counter', // A category name for your log
-      error: 'New counter value: $_counter', // You can pass extra data
-    );
+        'Counter incremented', // The main log message
+        name: 'my.app.counter', // A category name for your log
+        error: 'New counter value: $_counter', // You can pass extra data
+      );
     });
   }
 
@@ -90,6 +92,20 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        // Add the following 'actions' property
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.article_outlined),
+            tooltip: 'Open Form',
+            // Inside the IconButton in main.dart
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FormPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it

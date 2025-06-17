@@ -1,0 +1,39 @@
+# A name for your workflow, which will appear on GitHub's "Actions" tab.
+name: Flutter CI
+
+# This section defines WHEN the workflow will run.
+on:
+  # Run on pushes directly to the main branch.
+  push:
+    branches: [ "main" ]
+  # Also run on any pull request that targets the main branch.
+  pull_request:
+    branches: [ "main" ]
+
+# This section defines WHAT the workflow will DO.
+jobs:
+  # We'll define a single "job" called "build_and_test".
+  build_and_test:
+    # The type of virtual machine to run the job on. We'll use the latest Ubuntu Linux.
+    runs-on: ubuntu-latest
+
+    # A sequence of steps to execute for this job.
+    steps:
+      # Step 1: Checks out your repository's code onto the runner.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Sets up the Flutter SDK on the virtual machine.
+      # This is a pre-made action from the community that makes it easy.
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' 
+
+      # Step 3: Gets the project's dependencies (like flutter_lints).
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Step 4: Run our automated tests!
+      - name: Run tests
+        run: flutter test

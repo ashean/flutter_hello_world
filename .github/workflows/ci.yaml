@@ -1,39 +1,61 @@
-# A name for your workflow, which will appear on GitHub's "Actions" tab.
-name: Flutter CI
+# Give the workflow a more descriptive name
+name: Flutter CI/CD
 
-# This section defines WHEN the workflow will run.
+# Triggers remain the same
 on:
-  # Run on pushes directly to the main branch.
   push:
     branches: [ "main" ]
-  # Also run on any pull request that targets the main branch.
   pull_request:
     branches: [ "main" ]
 
-# This section defines WHAT the workflow will DO.
-jobs:
-  # We'll define a single "job" called "build_and_test".
-  build_and_test:
-    # The type of virtual machine to run the job on. We'll use the latest Ubuntu Linux.
-    runs-on: ubuntu-latest
+# NEW: Add permissions required for the deployment job to work
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
-    # A sequence of steps to execute for this job.
+jobs:
+  # This first job is unchanged
+  build_and_test:
+    runs-on: ubuntu-latest
     steps:
-      # Step 1: Checks out your repository's code onto the runner.
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # Step 2: Sets up the Flutter SDK on the virtual machine.
-      # This is a pre-made action from the community that makes it easy.
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable' 
+          channel: 'stable'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run tests
+        run: flutter test
 
-      # Step 3: Gets the project's dependencies (like flutter_lints).
+  # --- ADD THE ENTIRE NEW DEPLOY JOB BELOW ---
+  deploy:
+    # This job will only run if the 'build_and_test' job completes successfully
+    needs: build_and_test
+    # This condition ensures the deploy job ONLY runs on a PUSH to main,
+    # not on pull requests.
+    if: github.event_name == 'push'
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
       - name: Install dependencies
         run: flutter pub get
 
-      # Step 4: Run our automated tests!
-      - name: Run tests
-        run: flutter test
+      # This command builds the release version of your web app
+      - name: Build web release
+        run: flutter build web --release --base-href /flutter_hello_world/
+
+      # This popular community action handles the deployment to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web

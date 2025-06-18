@@ -1,61 +1,61 @@
-# Give the workflow a more descriptive name
 name: Flutter CI/CD
 
-# Triggers remain the same
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-# NEW: Add permissions required for the deployment job to work
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+# New: This ensures that only one deployment runs at a time.
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  # This first job is unchanged
-  build_and_test:
+  # This job builds the app, runs tests, and uploads the website files.
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+
       - name: Install dependencies
         run: flutter pub get
+
       - name: Run tests
         run: flutter test
 
-  # --- ADD THE ENTIRE NEW DEPLOY JOB BELOW ---
-  deploy:
-    # This job will only run if the 'build_and_test' job completes successfully
-    needs: build_and_test
-    # This condition ensures the deploy job ONLY runs on a PUSH to main,
-    # not on pull requests.
-    if: github.event_name == 'push'
-
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-      - name: Install dependencies
-        run: flutter pub get
-
-      # This command builds the release version of your web app
+      # Build the web app
       - name: Build web release
         run: flutter build web --release --base-href /flutter_hello_world/
 
-      # This popular community action handles the deployment to GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      # NEW: Use the official action to upload the build output as an artifact
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
+          # The path to the built web app
+          path: ./build/web
+
+  # This new job takes the artifact and deploys it to GitHub Pages.
+  deploy:
+    # This job depends on the 'build' job to succeed first
+    needs: build
+    # This job needs permissions to write to the Pages deployment
+    permissions:
+      pages: write
+      id-token: write
+    # Define the deployment environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

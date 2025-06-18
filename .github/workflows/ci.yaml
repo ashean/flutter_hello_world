@@ -10,7 +10,7 @@ on:
 
 # NEW: Add permissions required for the deployment job to work
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 

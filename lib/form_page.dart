@@ -20,6 +20,19 @@ class _FormPageState extends State<FormPage> {
     super.dispose();
   }
 
+  void _submitForm(String text) {
+    developer.log(
+      'Form submitted with text: "$text"',
+      name: 'my.app.form',
+    );
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('You submitted: $text')));
+
+    _textController.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,22 +48,12 @@ class _FormPageState extends State<FormPage> {
                 border: OutlineInputBorder(),
                 labelText: 'Enter some text',
               ),
+              onSubmitted: _submitForm, // Call _submitForm when submitted
             ),
             const SizedBox(height: 16.0), // Just a spacer
             ElevatedButton(
               onPressed: () {
-                final text = _textController.text;
-
-                developer.log(
-                  'Form submitted with text: "$text"',
-                  name: 'my.app.form',
-                );
-
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('You submitted: $text')));
-
-                _textController.clear();
+                _submitForm(_textController.text); // Call _submitForm on press
               },
               child: const Text('Submit'),
             ),
